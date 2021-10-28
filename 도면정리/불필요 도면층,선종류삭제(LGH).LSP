@@ -1,0 +1,7 @@
+(defun c:lgh (/ AcDoc)
+	(vl-load-com)
+	(setq AcDoc (vla-get-ActiveDocument (vlax-get-acad-Object)))
+	(dictremove (namedobjdict) "acad_dgnlinestylecomp")
+	(repeat 3 (vla-purgeall AcDoc))
+	(princ)
+)

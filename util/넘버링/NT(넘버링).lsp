@@ -1,0 +1,27 @@
+(defun c:NT ()
+  (setq s_num (getstring "n 시작할 번호입력 : "))
+  (setq ts (getreal "n Text size : "))  
+  (setq cs (* ts 1.5)) ; 원의 크기는 문자 크기의 1.5배
+  (if (= s_num "") (setq s_num num) (setq num (itoa (1- (read s_num)))))
+  (while 
+      (setvar "osmode" 0) 
+      (setq txt_pt (getpoint "n Text insertion point: "))  
+       (command ".text" txt_pt ts "" (if (not num) (setq num "0") (setq num (itoa (1+ (read num)))))"")
+   (setq el (entlast))
+   (COMMAND "CHANGE" "L" "" "P" "C" "2" "") ; 문자색상
+       (setq os (getvar "osmode")) 
+       (setq ss (ssadd)) 
+   (ssadd el ss) 
+       (setq k 0) 
+       (setq en (ssname ss k))
+       (command "justifytext" en "" "mc")
+       (setq en (ssname ss k))
+       (setq p1 (cdr (assoc 10 (entget en))))
+       (setq p2 (cdr (assoc 11 (entget en))))
+       (command "circle" p2 cs)
+    (COMMAND "CHANGE" "L" "" "P" "C" "2" "") ;원의 색상
+      (setq k (+ k 1)) 
+   (setvar "osmode" os)
+   (princ) 
+ )
+)

@@ -1,0 +1,37 @@
+(defun C:lf (/ f cla cl b c tla e n ss typ el eel fla)
+ (princ "\nSelect objects to OFF layer...")
+ (setvar "cmdecho" 0)
+ (command "undo" "group")
+ (command "layer" "s" "0" "")
+ (setq a (ssget))
+ (setq cl (getvar "clayer"))
+ (if a (progn
+ (setq b (sslength a))
+ (setq c 0)
+ (while (<= 1 b )
+   (setq a8 (cdr (assoc 8(entget (ssname a c )))))
+   (if (> c 0)
+     (setq fla (strcat fla "," a8)) ;OFF layer
+     (setq fla a8)
+     )
+   (setq b (- b 1))
+   (setq c (+ c 1))
+   );end while
+  (command "LAYER" "OFF" fla "")
+  (if (= "LAYER" (getvar "cmdnames"))
+  (command "")
+    )
+  )
+)
+ (if (= a nil)
+   (progn
+     (prompt "\nEnter layer names to OFF: ")
+     (setq e (getstring))
+     (command "LAYER" "OFF" e "y" "")
+(command "undo" "en")
+     )
+   )
+(princ)
+)
+
+ 
