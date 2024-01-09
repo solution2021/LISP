@@ -1,6 +1,7 @@
-1. 압축 해제 
-2. MioseCAD 2006 폴더를 c드라이브에 이동
-   (폴더 이름이 꼭 "MioseCAD 2006" 이어야 함)
-3. 캐드 실행
-4. "appload"에 MioseStart_zw.lsp 포함
+1. MioseCAD_1 / MioseCAD_2 <- 2개의 파일 모두 압축 해제
+2. C드라이브에 MioseCAD 2006 폴더 생성
+   (폴더 이름이 "MioseCAD 2006"가 아니면 실행불가)
+3. 1번에서 압축 푼 폴더 안의 파일을 C:\MioseCAD 2006 폴더로 이동
+   (파일만 이동 필수)
+4. "Appload"에 MioseStart_zw.lsp 포함
 5. 캐드 재실행
