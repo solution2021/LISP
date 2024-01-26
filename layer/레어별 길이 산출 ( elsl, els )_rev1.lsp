@@ -1,0 +1,171 @@
+;;=======================================================================================================================
+;;
+;; [[一初]] 선택한 객체의 길이를 레이어별로 표시하는리습  
+;; 글쓴이: 一初     2011.10.06 15:42
+;; 선택한 객체들의 길이 합계를 레이어별로 산출근거처럼 나타내어줌
+;; 
+;;-----------------------------------------------------------------------------------------------------------------------
+
+(defun c:elsl (/ os lt lay sslist ss index layerlist linelist linenumlist ent old8 dist txtlist txt totoalstr totoal subtotoal maxlen1 maxlen2 pt)
+  (princ "\n Eltity Length Sum")
+  (setvar "cmdecho" 0)
+  (setq os (getvar "osmode"))
+  (setq lt (getvar "ltscale"))
+  (setq lay (getvar "clayer"))
+  (setq sslist nil)
+  (setq ss (ssget (list (cons 0 "LINE,CIRCLE,ARC,POLYLINE,LWPOLYLINE,ELLIPSE,SPLINE"))))
+  (if ss
+    (progn
+      (setq index 0)
+      (setq layerlist nil)
+      (setq linelist nil)
+      (setq linenumlist nil)
+      (repeat (sslength ss)
+        (setq ent (ssname ss index))
+        (setq old8 (cdr (assoc 8 (entget ent))))
+        (command "lengthen" ent "" "" "")
+        (setq dist (atof (rtos (GETVAR "PERIMETER") 2 8)))
+        (if (assoc old8 layerlist)
+          (progn
+            (setq linelist (cdr (assoc old8 layerlist)))
+		        (if (assoc dist linelist)
+              (progn
+                (setq linelist (subst (cons dist (+ (cdr (assoc dist linelist)) 1)) (assoc dist linelist) linelist))
+              )
+              (progn
+                (setq linelist (append linelist (list (cons dist 1))))
+              )
+		        )
+            (setq layerlist (subst (cons old8 linelist) (assoc old8 layerlist) layerlist))
+          )
+          (progn
+            (setq layerlist (append layerlist (list (cons old8 (list (cons dist 1))))))
+          )
+        )
+        (setq index (1+ index))
+      )
+      (setq txtlist (list (list "레이어" "갯수" "산식")))
+      (setq maxlen1 0.0)
+      (setq maxlen2 0.0)
+      (setq totoalstr "")
+      (setq totoal 0.0)
+      (foreach x layerlist
+        (setq txt "")
+        (setq subtotoal 0.0)
+        (foreach xx (cdr x)
+          (setq txt (strcat txt "+" (rtos (/ (car xx) 1000.0) 2 2) "x" (rtos (cdr xx) 2 0) "ea"))
+          (setq subtotoal (+ subtotoal (* (atof (rtos (/ (car xx) 1000.0) 2 2)) (cdr xx))))
+        )
+        (setq totoalstr (strcat totoalstr "+" (rtos subtotoal 2 2)))
+        (setq totoal (+ totoal subtotoal))
+        (setq txt (strcat (substr txt 2) "=" (rtos subtotoal 2 2) "m"))
+        (if (> (strlen (car x)) maxlen1) (setq maxlen1 (strlen (car x))))
+        (if (> (strlen (itoa (length (cdr x)))) maxlen2) (setq maxlen2 (strlen (itoa (length (cdr x))))))
+        (setq txtlist (append txtlist (list (list (car x) (itoa (length (cdr x))) txt))))
+      )
+      (setvar "osmode" 111)
+      (setq pt (getpoint "\n 텍스트 삽입점 : "))
+      (if pt
+        (progn
+          (setvar "osmode" 0)
+	        (foreach x txtlist
+            (if (tblsearch "layer" (nth 0 x))
+              (setvar "clayer" (nth 0 x))
+              (setvar "clayer" lay)
+            )
+	          (command "text" pt (* lt 2.5) 0.0 (nth 0 x))
+            (command "text" (list (+ (car pt) (* maxlen1 5.0)) (cadr pt)) (* lt 2.5) 0.0 (nth 1 x))
+            (command "text" (list (+ (car pt) (* maxlen1 7.0) (* maxlen2 4.0)) (cadr pt)) (* lt 2.5) 0.0 (nth 2 x))
+	          (setq pt (list (car pt) (- (cadr pt) (* lt 5.0))))
+	        )
+          (setvar "clayer" lay)
+          (command "text" pt (* lt 2.5) 0.0 "TOTAL")
+          (command "text" (list (+ (car pt) (* maxlen1 5.0)) (cadr pt)) (* lt 2.5) 0.0 "=")
+          (command "text" (list (+ (car pt) (* maxlen1 7.0) (* maxlen2 4.0)) (cadr pt)) (* lt 2.5) 0.0 (strcat (substr totoalstr 2) "=" (rtos totoal 2 2) "m"))
+        )
+      )
+      (setvar "osmode" os)
+    )
+  )
+  (princ)
+)
+
+;;=======================================================================================================================
+;;
+;; [[一初]] 선택한 객체의 길이를 표시하는리습  
+;; 글쓴이: 一初     2007.08.27 11:34 
+;; 선택한 객체들의 길이 합계를 산출근거처럼 나타내어줌
+;; 
+;;-----------------------------------------------------------------------------------------------------------------------
+
+(defun c:els (/ ss sslist i index linelist linenumlist ent old10 old11 dist lnum count temp total subtotal txt pt)
+  (princ "\n Eltity Length Sum")
+  (setvar "cmdecho" 0)
+  (setq sslist nil)
+  (setq ss (ssget (list (cons 0 "LINE,CIRCLE,ARC,POLYLINE,LWPOLYLINE,ELLIPSE,SPLINE"))))
+  (if ss
+    (progn
+      (setq index 0)
+      (setq linelist nil)
+      (setq linenumlist nil)
+      (repeat (sslength ss)
+        (setq ent (ssname ss index))
+        (command "lengthen" ent "" "" "")
+        (setq dist (GETVAR "PERIMETER"))
+        (if (apply 'or (mapcar '(lambda (x) (equal dist x 0.0001)) linelist))
+          (progn
+            (setq temp 0)
+            (setq lnum nil)
+            (foreach x linelist
+              (if (equal dist x 0.0001)
+                (setq lnum temp)
+              )
+              (setq temp (1+ temp))
+            )
+            (setq count 0)
+            (setq temp nil)
+            (foreach x linenumlist
+              (if (= count lnum)
+                (setq temp (append temp (list (+ x 1))))
+                (setq temp (append temp (list x)))
+              )
+              (setq count (1+ count))
+            )
+            (setq linenumlist temp)
+          )
+          (progn
+            (setq linelist (append linelist (list dist)))
+            (setq linenumlist (append linenumlist (list 1)))
+          )
+        )
+        (setq index (1+ index))
+      )
+      (setq txt "")
+      (setq count 0)
+      (setq total 0)
+      (setq subtotal 0)
+      (repeat (length linelist)
+        (if (= count 0)
+          (if (> (nth count linenumlist) 1)
+            (setq txt (strcat "\nL=" (rtos (/ (nth count linelist) 1000.0) 2 2) "x" (rtos (nth count linenumlist) 2 0) "ea"))
+            (setq txt  (strcat "\nL=" (rtos (/ (nth count linelist) 1000.0) 2 2)))
+          )
+          (if (> (nth count linenumlist) 1)
+            (setq txt (strcat txt "+" (rtos (/ (nth count linelist) 1000.0) 2 2) "x" (rtos (nth count linenumlist) 2 0) "ea"))
+            (setq txt (strcat txt "+" (rtos (/ (nth count linelist) 1000.0) 2 2)))
+          )
+        )
+        (setq subtotal (* (/ (nth count linelist) 1000.0) (nth count linenumlist)))
+        (setq total (+ subtotal total))
+        (setq count (1+ count))
+      )
+      (setq txt (strcat txt "=" (rtos total 2 2) "m"))
+;;;;;      (setq txt (strcat txt ", 객체수" (rtos (length linelist) 2 0) "개"))
+      (setq txt (strcat txt ", Layer수 = " (rtos (length linelist) 2 0) "개"))
+      (princ txt)
+      (setq pt (getpoint "\n 텍스트 삽입점 : "))
+      (if pt (command "text" pt "" "" txt))
+    )
+  )
+  (princ)
+)
